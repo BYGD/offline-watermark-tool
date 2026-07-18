@@ -16,6 +16,20 @@
     --accent: #4a9eff;
     --accent-hover: #6bb0ff;
     --danger: #ff5c5c;
+    --canvas-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+  /* 白天主题 */
+  :root[data-theme="light"] {
+    --bg: #f5f6f8;
+    --panel: #ffffff;
+    --panel-2: #f0f2f5;
+    --border: #e0e3e8;
+    --text: #1a1d24;
+    --text-dim: #6b7280;
+    --accent: #2563eb;
+    --accent-hover: #1d4ed8;
+    --danger: #dc2626;
+    --canvas-shadow: 0 8px 32px rgba(0,0,0,0.12);
   }
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
@@ -24,6 +38,7 @@
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    transition: background 0.25s, color 0.25s;
   }
   header {
     padding: 18px 28px;
@@ -45,6 +60,36 @@
     border: 1px solid var(--border);
     border-radius: 12px;
   }
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .theme-toggle {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--panel-2);
+    color: var(--text);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+  }
+  .theme-toggle:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .theme-toggle svg {
+    width: 18px;
+    height: 18px;
+  }
+  .theme-toggle .icon-sun { display: none; }
+  .theme-toggle .icon-moon { display: block; }
+  :root[data-theme="light"] .theme-toggle .icon-sun { display: block; }
+  :root[data-theme="light"] .theme-toggle .icon-moon { display: none; }
   .main {
     flex: 1;
     display: grid;
@@ -136,6 +181,9 @@
     cursor: pointer;
     border: 2px solid var(--panel);
   }
+  :root[data-theme="light"] select {
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'><polyline points='6 9 12 15 18 9'/></svg>");
+  }
   select {
     appearance: none;
     background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238b919c' stroke-width='2'><polyline points='6 9 12 15 18 9'/></svg>");
@@ -224,7 +272,7 @@
     max-width: 100%;
     max-height: calc(100vh - 160px);
     border-radius: 8px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    box-shadow: var(--canvas-shadow);
     display: block;
   }
   .file-name {
@@ -350,7 +398,13 @@
 <body>
   <header>
     <h1>离线全屏水印工具</h1>
-    <span class="badge">本地处理 · 不上传服务器</span>
+    <div class="header-right">
+      <button class="theme-toggle" id="theme-toggle" title="切换白天/夜晚主题" aria-label="切换主题">
+        <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      </button>
+      <span class="badge">本地处理 · 不上传服务器</span>
+    </div>
   </header>
 
   <div class="main">
@@ -477,6 +531,18 @@
   const ctx = canvas.getContext('2d');
   const saveBtn = $('save-btn');
   const toast = $('toast');
+
+  // 主题切换（白天/夜晚）
+  const themeToggle = $('theme-toggle');
+  const docRoot = document.documentElement;
+  const savedTheme = localStorage.getItem('wm-theme') || 'dark';
+  docRoot.setAttribute('data-theme', savedTheme);
+  themeToggle.addEventListener('click', () => {
+    const cur = docRoot.getAttribute('data-theme');
+    const next = cur === 'light' ? 'dark' : 'light';
+    docRoot.setAttribute('data-theme', next);
+    localStorage.setItem('wm-theme', next);
+  });
 
   let currentImage = null;
   let currentFileName = '';
