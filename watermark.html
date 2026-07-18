@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>离线全屏水印工具</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0f1115;
+    --panel: #1a1d24;
+    --panel-2: #22262f;
+    --border: #2e333d;
+    --text: #e6e8eb;
+    --text-dim: #8b919c;
+    --accent: #4a9eff;
+    --accent-hover: #6bb0ff;
+    --danger: #ff5c5c;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  header {
+    padding: 18px 28px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--panel);
+  }
+  header h1 {
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+  header .badge {
+    font-size: 12px;
+    color: var(--text-dim);
+    padding: 4px 10px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+  }
+  .main {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    gap: 0;
+    min-height: 0;
+  }
+  .sidebar {
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+    padding: 24px;
+    overflow-y: auto;
+  }
+  .preview-area {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 30px;
+    overflow: auto;
+    position: relative;
+  }
+  .field {
+    margin-bottom: 20px;
+  }
+  .field label {
+    display: block;
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+    font-weight: 500;
+  }
+  .field label .val {
+    color: var(--accent);
+    float: right;
+    font-variant-numeric: tabular-nums;
+  }
+  input[type="text"],
+  input[type="number"],
+  select {
+    width: 100%;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.15s;
+    font-family: inherit;
+  }
+  input[type="text"]:focus,
+  input[type="number"]:focus,
+  select:focus {
+    border-color: var(--accent);
+  }
+  input[type="color"] {
+    width: 100%;
+    height: 42px;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    padding: 4px;
+  }
+  input[type="range"] {
+    width: 100%;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    outline: none;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: var(--accent);
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid var(--panel);
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: var(--accent);
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid var(--panel);
+  }
+  select {
+    appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238b919c' stroke-width='2'><polyline points='6 9 12 15 18 9'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 32px;
+  }
+  .btn {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+    text-align: center;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+  }
+  .btn-primary:hover:not(:disabled) {
+    background: var(--accent-hover);
+  }
+  .btn-primary:disabled {
+    background: var(--border);
+    color: var(--text-dim);
+    cursor: not-allowed;
+  }
+  .btn-secondary {
+    background: var(--panel-2);
+    color: var(--text);
+    border: 1px solid var(--border);
+    margin-bottom: 10px;
+  }
+  .btn-secondary:hover {
+    border-color: var(--accent);
+  }
+  .btn-row {
+    display: flex;
+    gap: 10px;
+  }
+  .btn-row .btn {
+    margin: 0;
+  }
+  .dropzone {
+    border: 2px dashed var(--border);
+    border-radius: 12px;
+    padding: 50px 30px;
+    text-align: center;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all 0.2s;
+    width: 100%;
+    max-width: 600px;
+  }
+  .dropzone:hover,
+  .dropzone.dragover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(74, 158, 255, 0.04);
+  }
+  .dropzone svg {
+    margin-bottom: 12px;
+  }
+  .dropzone p {
+    font-size: 14px;
+    margin-bottom: 4px;
+  }
+  .dropzone .hint {
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+  #preview-wrap {
+    position: relative;
+    max-width: 100%;
+    max-height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #canvas {
+    max-width: 100%;
+    max-height: calc(100vh - 160px);
+    border-radius: 8px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    display: block;
+  }
+  .file-name {
+    position: absolute;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    font-size: 12px;
+    padding: 4px 12px;
+    border-radius: 12px;
+    backdrop-filter: blur(8px);
+    pointer-events: none;
+  }
+  .section-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    opacity: 0;
+    transition: all 0.3s;
+    pointer-events: none;
+    z-index: 1000;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  .toast.success { border-color: #4ade80; }
+  .toast.error { border-color: var(--danger); }
+  .preset-colors {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+  }
+  .preset-color {
+    width: 22px;
+    height: 22px;
+    border-radius: 4px;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: transform 0.1s;
+  }
+  .preset-color:hover {
+    transform: scale(1.15);
+  }
+  .preset-color.active {
+    border-color: var(--accent);
+  }
+  .preset-templates {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+  }
+  .tpl-btn {
+    background: var(--panel-2);
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+    white-space: nowrap;
+  }
+  .tpl-btn:hover {
+    border-color: var(--accent);
+    color: var(--text);
+  }
+  .tpl-btn.active {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+  .color-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .color-row input[type="color"] {
+    flex: 0 0 60px;
+    height: 38px;
+  }
+  .color-row input[type="text"] {
+    flex: 1;
+    text-transform: uppercase;
+    font-family: 'Consolas', 'Monaco', monospace;
+    letter-spacing: 1px;
+  }
+  footer {
+    padding: 12px 28px;
+    border-top: 1px solid var(--border);
+    background: var(--panel);
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+  @media (max-width: 768px) {
+    .main { grid-template-columns: 1fr; }
+    .sidebar { max-height: 50vh; }
+  }
+</style>
+</head>
+<body>
+  <header>
+    <h1>离线全屏水印工具</h1>
+    <span class="badge">本地处理 · 不上传服务器</span>
+  </header>
+
+  <div class="main">
+    <aside class="sidebar">
+      <div class="section-title">图片</div>
+      <div class="field">
+        <button class="btn btn-secondary" id="upload-btn">选择图片</button>
+        <input type="file" id="file-input" accept="image/*" hidden>
+      </div>
+
+      <div class="section-title">水印设置</div>
+
+      <div class="field">
+        <label>水印文字 <span style="color:var(--text-dim);font-size:11px;">（点下方按钮快速选，也可自己改）</span></label>
+        <input type="text" id="prefix" value="仅供内部使用" placeholder="输入水印文字">
+        <div class="preset-templates" id="preset-templates">
+          <button class="tpl-btn active" data-text="仅供内部使用">仅供内部使用</button>
+          <button class="tpl-btn" data-text="内部资料·禁止外传">内部资料·禁止外传</button>
+          <button class="tpl-btn" data-text="机密文件">机密文件</button>
+          <button class="tpl-btn" data-text="请勿外传">请勿外传</button>
+          <button class="tpl-btn" data-text="严禁复制">严禁复制</button>
+          <button class="tpl-btn" data-text="仅供XX实名认证使用">仅供XX实名认证</button>
+          <button class="tpl-btn" data-text="仅供{date}使用">带日期水印</button>
+          <button class="tpl-btn" data-text="版权所有">版权所有</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>水印颜色</label>
+        <div class="color-row">
+          <input type="color" id="color" value="#ff0000">
+          <input type="text" id="color-hex" value="#FF0000" maxlength="7" placeholder="#FFFFFF">
+        </div>
+        <div class="preset-colors" id="preset-colors">
+          <div class="preset-color" style="background:#888888" data-color="#888888" title="灰色"></div>
+          <div class="preset-color" style="background:#000000" data-color="#000000" title="黑色"></div>
+          <div class="preset-color active" style="background:#ff0000" data-color="#ff0000" title="红色"></div>
+          <div class="preset-color" style="background:#ff5c5c" data-color="#ff5c5c" title="亮红"></div>
+          <div class="preset-color" style="background:#4a9eff" data-color="#4a9eff" title="蓝色"></div>
+          <div class="preset-color" style="background:#4ade80" data-color="#4ade80" title="绿色"></div>
+          <div class="preset-color" style="background:#facc15" data-color="#facc15" title="黄色"></div>
+          <div class="preset-color" style="background:#a855f7" data-color="#a855f7" title="紫色"></div>
+          <div class="preset-color" style="background:#ffffff" data-color="#ffffff" title="白色"></div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>不透明度 <span class="val" id="opacity-val">40%</span></label>
+        <input type="range" id="opacity" min="5" max="100" value="40">
+      </div>
+
+      <div class="field">
+        <label>文字大小比 <span class="val" id="size-val">4.0</span></label>
+        <input type="range" id="size" min="0.5" max="10" step="0.1" value="4.0">
+      </div>
+
+      <div class="field">
+        <label>水印间隔比 <span class="val" id="gap-val">2.0</span></label>
+        <input type="range" id="gap" min="0.5" max="8" step="0.1" value="2.0">
+      </div>
+
+      <div class="field">
+        <label>旋转角度 <span class="val" id="rotate-val">-30°</span></label>
+        <input type="range" id="rotate" min="-90" max="90" value="-30">
+      </div>
+
+      <div class="field">
+        <label>字体</label>
+        <select id="font">
+          <option value="sans-serif">无衬线 (Sans-serif)</option>
+          <option value="serif">衬线 (Serif)</option>
+          <option value="'Microsoft YaHei', sans-serif">微软雅黑</option>
+          <option value="'PingFang SC', sans-serif">苹方</option>
+          <option value="monospace">等宽 (Monospace)</option>
+          <option value="'KaiTi', serif">楷体</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>字重</label>
+        <select id="weight">
+          <option value="normal">常规</option>
+          <option value="bold" selected>粗体</option>
+        </select>
+      </div>
+
+      <div class="section-title">导出</div>
+      <div class="field">
+        <button class="btn btn-primary" id="save-btn" disabled>保存图片</button>
+      </div>
+    </aside>
+
+    <main class="preview-area" id="preview-area">
+      <div class="dropzone" id="dropzone">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/>
+          <line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+        <p>点击或拖拽图片到这里</p>
+        <p class="hint">支持 JPG / PNG / WEBP · 本地处理</p>
+      </div>
+      <div id="preview-wrap" style="display:none">
+        <canvas id="canvas"></canvas>
+        <div class="file-name" id="file-name"></div>
+      </div>
+    </main>
+  </div>
+
+  <footer>
+    图片仅在浏览器本地处理，不会上传到任何服务器 · 关闭页面即清除
+  </footer>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+(function() {
+  const $ = id => document.getElementById(id);
+  const fileInput = $('file-input');
+  const uploadBtn = $('upload-btn');
+  const dropzone = $('dropzone');
+  const previewWrap = $('preview-wrap');
+  const canvas = $('canvas');
+  const ctx = canvas.getContext('2d');
+  const saveBtn = $('save-btn');
+  const toast = $('toast');
+
+  let currentImage = null;
+  let currentFileName = '';
+
+  // 控件
+  const colorEl = $('color');
+  const colorHex = $('color-hex');
+  const opacityEl = $('opacity');
+  const sizeEl = $('size');
+  const gapEl = $('gap');
+  const rotateEl = $('rotate');
+  const fontEl = $('font');
+  const prefixEl = $('prefix');
+  const weightEl = $('weight');
+
+  // 数值显示
+  const opacityVal = $('opacity-val');
+  const sizeVal = $('size-val');
+  const gapVal = $('gap-val');
+  const rotateVal = $('rotate-val');
+
+  function showToast(msg, type) {
+    toast.textContent = msg;
+    toast.className = 'toast show ' + (type || '');
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(() => toast.className = 'toast', 2200);
+  }
+
+  function updateLabels() {
+    opacityVal.textContent = opacityEl.value + '%';
+    sizeVal.textContent = parseFloat(sizeEl.value).toFixed(1);
+    gapVal.textContent = parseFloat(gapEl.value).toFixed(1);
+    rotateVal.textContent = rotateEl.value + '°';
+  }
+
+  // 预设颜色
+  const presetColors = document.querySelectorAll('.preset-color');
+  presetColors.forEach(p => {
+    p.addEventListener('click', () => {
+      colorEl.value = p.dataset.color;
+      colorHex.value = p.dataset.color.toUpperCase();
+      presetColors.forEach(c => c.classList.remove('active'));
+      p.classList.add('active');
+      render();
+    });
+  });
+
+  // 文件上传
+  uploadBtn.addEventListener('click', () => fileInput.click());
+  dropzone.addEventListener('click', () => fileInput.click());
+
+  fileInput.addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (file) loadImage(file);
+  });
+
+  // 拖拽
+  dropzone.addEventListener('dragover', e => {
+    e.preventDefault();
+    dropzone.classList.add('dragover');
+  });
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+  dropzone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropzone.classList.remove('dragover');
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) {
+      loadImage(file);
+    } else {
+      showToast('请选择图片文件', 'error');
+    }
+  });
+
+  function loadImage(file) {
+    currentFileName = file.name;
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        currentImage = img;
+        $('file-name').textContent = file.name;
+        dropzone.style.display = 'none';
+        previewWrap.style.display = 'flex';
+        saveBtn.disabled = false;
+        render();
+        showToast('图片已加载', 'success');
+      };
+      img.onerror = () => showToast('图片加载失败', 'error');
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // 渲染水印
+  function render() {
+    if (!currentImage) return;
+    updateLabels();
+
+    const img = currentImage;
+    canvas.width = img.width;
+    canvas.height = img.height;
+
+    // 绘制原图
+    ctx.drawImage(img, 0, 0);
+
+    const color = colorEl.value;
+    const opacity = parseInt(opacityEl.value) / 100;
+    const sizeRatio = parseFloat(sizeEl.value);
+    const gapRatio = parseFloat(gapEl.value);
+    const rotate = parseInt(rotateEl.value);
+    const fontFamily = fontEl.value;
+    const fontWeight = weightEl.value;
+
+    // 模板变量替换（prefix 本身就是水印文字，支持变量）
+    const now = new Date();
+    const date = now.toISOString().slice(0, 10);
+    const time = now.toTimeString().slice(0, 8);
+    const datetime = date + ' ' + time;
+    const random = Math.random().toString(16).slice(2, 14).toUpperCase().padEnd(12, '0');
+    const fn = currentFileName.replace(/\.[^.]+$/, '') || 'image';
+
+    let text = (prefixEl.value || '水印')
+      .replace(/\{datetime\}/g, datetime)
+      .replace(/\{date\}/g, date)
+      .replace(/\{time\}/g, time)
+      .replace(/\{random\}/g, random)
+      .replace(/\{filename\}/g, fn);
+    if (!text) text = '水印';
+
+    // 基准字号：图片短边的百分比
+    const base = Math.min(img.width, img.height);
+    const fontSize = Math.max(8, base * sizeRatio / 100);
+
+    // 测量文字
+    ctx.font = fontWeight + ' ' + fontSize + 'px ' + fontFamily;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const metrics = ctx.measureText(text);
+    const textW = metrics.width;
+    const textH = fontSize;
+
+    // 步长 = 文字宽/高 + 字号×间隔比（间距用字号做基准更稳定）
+    const extraGap = fontSize * gapRatio;
+    const stepX = textW + extraGap;
+    const stepY = textH * 1.8 + extraGap;  // 行高略大于字号
+
+    // 覆盖范围：对角线×1.5 确保旋转后不漏角
+    const diagonal = Math.sqrt(img.width * img.width + img.height * img.height) * 1.5;
+    const cols = Math.ceil(diagonal / stepX) + 4;
+    const rows = Math.ceil(diagonal / stepY) + 4;
+
+    ctx.save();
+    // 移到中心，旋转，再平移覆盖
+    ctx.translate(img.width / 2, img.height / 2);
+    ctx.rotate(rotate * Math.PI / 180);
+
+    // 提取颜色 hex → rgba
+    const hex = color.replace('#', '');
+    const r = parseInt(hex.substr(0, 2), 16);
+    const g = parseInt(hex.substr(2, 2), 16);
+    const b = parseInt(hex.substr(4, 2), 16);
+
+    ctx.fillStyle = 'rgba(' + r + ',' + g + ',' + b + ',' + opacity + ')';
+
+    const startX = -(cols * stepX) / 2;
+    const startY = -(rows * stepY) / 2;
+
+    for (let i = 0; i <= rows; i++) {
+      // 交错排列，更像专业水印
+      const offset = (i % 2) * (stepX / 2);
+      for (let j = 0; j <= cols; j++) {
+        const x = startX + j * stepX + offset;
+        const y = startY + i * stepY;
+        ctx.fillText(text, x, y);
+      }
+    }
+    ctx.restore();
+  }
+
+  // 控件监听
+  [prefixEl, opacityEl, sizeEl, gapEl, rotateEl, fontEl, weightEl].forEach(el => {
+    el.addEventListener('input', render);
+  });
+
+  // 水印文字输入时，取消所有模板按钮的高亮（说明用户在自定义）
+  prefixEl.addEventListener('input', () => {
+    document.querySelectorAll('.tpl-btn').forEach(b => b.classList.remove('active'));
+  });
+
+  // 模板按钮：点击填入对应文字
+  document.querySelectorAll('.tpl-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const txt = btn.dataset.text;
+      prefixEl.value = txt;
+      document.querySelectorAll('.tpl-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      render();
+    });
+  });
+
+  // HEX 输入框 ↔ 颜色选择器联动
+  function syncHexToColor() {
+    let v = colorHex.value.trim();
+    if (!v.startsWith('#')) v = '#' + v;
+    if (/^#[0-9a-fA-F]{6}$/.test(v)) {
+      colorEl.value = v.toLowerCase();
+      document.querySelectorAll('.preset-color').forEach(c => c.classList.remove('active'));
+      render();
+    }
+  }
+  colorHex.addEventListener('input', syncHexToColor);
+  colorHex.addEventListener('blur', () => {
+    // 失焦时格式化成大写
+    colorHex.value = colorEl.value.toUpperCase();
+  });
+  colorEl.addEventListener('input', () => {
+    colorHex.value = colorEl.value.toUpperCase();
+    document.querySelectorAll('.preset-color').forEach(c => c.classList.remove('active'));
+    render();
+  });
+
+  // 保存
+  saveBtn.addEventListener('click', () => {
+    if (!currentImage) return;
+    try {
+      const link = document.createElement('a');
+      const name = currentFileName.replace(/\.[^.]+$/, '');
+      link.download = name + '_watermark.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      showToast('图片已保存', 'success');
+    } catch (err) {
+      showToast('保存失败：' + err.message, 'error');
+    }
+  });
+
+  // 粘贴支持
+  window.addEventListener('paste', e => {
+    const items = e.clipboardData && e.clipboardData.items;
+    if (!items) return;
+    for (const item of items) {
+      if (item.type.startsWith('image/')) {
+        const file = item.getAsFile();
+        if (file) {
+          loadImage(file);
+          break;
+        }
+      }
+    }
+  });
+
+  // 初始化预设色高亮
+  presetColors[2].classList.add('active');
+})();
+</script>
+</body>
+</html>
