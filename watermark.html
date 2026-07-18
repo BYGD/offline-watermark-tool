@@ -3,7 +3,33 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>离线全屏水印工具</title>
+<title>离线全屏水印工具 - 图片水印在线添加，本地处理不上传</title>
+<meta name="description" content="纯前端离线图片水印工具，本地处理不上传服务器，保护隐私安全。支持自定义文字、颜色、透明度、旋转角度、字体，一键保存PNG图片。">
+<meta name="keywords" content="图片水印,在线水印,离线水印工具,水印添加,图片加水印,隐私保护,本地处理,全屏水印,满屏水印">
+<link rel="canonical" href="https://www.cangdog.com/watermark.html">
+<meta name="robots" content="index, follow">
+<meta property="og:type" content="website">
+<meta property="og:title" content="离线全屏水印工具 - 图片水印在线添加">
+<meta property="og:description" content="纯前端离线图片水印工具，本地处理不上传服务器。支持自定义文字、颜色、透明度、旋转角度，一键保存。">
+<meta property="og:url" content="https://www.cangdog.com/watermark.html">
+<meta property="og:site_name" content="藏狗">
+<meta property="og:locale" content="zh_CN">
+<meta property="twitter:card" content="summary">
+<meta property="twitter:title" content="离线全屏水印工具 - 图片水印在线添加">
+<meta property="twitter:description" content="纯前端离线图片水印工具，本地处理不上传服务器。支持自定义文字、颜色、透明度、旋转角度，一键保存。">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "离线全屏水印工具",
+  "url": "https://www.cangdog.com/watermark.html",
+  "description": "纯前端离线图片水印工具，本地处理不上传服务器。支持自定义文字、颜色、透明度、旋转角度、字体，一键保存PNG图片。",
+  "applicationCategory": "Multimedia",
+  "operatingSystem": "Any",
+  "offers": { "@type": "Offer", "price": "0" },
+  "browserRequirements": "Requires JavaScript"
+}
+</script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
@@ -395,24 +421,9 @@
     .main { grid-template-columns: 300px 1fr; }
     .sidebar { padding: 20px; }
   }
-  /* 嵌入模式（iframe / 博客内嵌） */
-  html[data-embed] body { min-height: 0; }
-  html[data-embed] .main { min-height: 0; display: grid !important; grid-template-columns: 280px 1fr !important; }
-  html[data-embed] .sidebar { max-height: 400px; overflow-y: auto; padding: 16px; }
-  html[data-embed] .preview-area { padding: 16px; min-height: 160px; }
-  html[data-embed] header { padding: 12px 16px; }
-  html[data-embed] header h1 { font-size: 15px; }
-  html[data-embed] .badge { font-size: 11px; padding: 3px 8px; }
-  html[data-embed] .theme-toggle { width: 32px; height: 32px; }
-  html[data-embed] footer { padding: 8px 16px; font-size: 11px; }
-  html[data-embed] .section-title { margin-bottom: 10px; padding-bottom: 8px; }
-  html[data-embed] .field { margin-bottom: 14px; }
-  html[data-embed] input[type="range"] { height: 3px; }
-  html[data-embed] input[type="range"]::-webkit-slider-thumb { width: 14px; height: 14px; }
-  html[data-embed] input[type="range"]::-moz-range-thumb { width: 14px; height: 14px; }
-  /* 手机：单列布局（仅非嵌入模式） */
+  /* 手机：单列布局 */
   @media (max-width: 768px) {
-    html:not([data-embed]) .main { grid-template-columns: 1fr; }
+    .main { grid-template-columns: 1fr; }
     .sidebar { max-height: none; padding: 16px; }
     .preview-area { padding: 16px; }
     header { padding: 14px 16px; }
@@ -563,11 +574,6 @@
 
 <script>
 (function() {
-  // 检测嵌入模式（iframe / 博客内嵌）
-  if (window.top !== window.self) {
-    document.documentElement.setAttribute('data-embed', '');
-  }
-
   const $ = id => document.getElementById(id);
   const fileInput = $('file-input');
   const uploadBtn = $('upload-btn');
